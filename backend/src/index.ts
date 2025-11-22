@@ -106,12 +106,12 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-const PORT = parseInt(process.env.PORT || '3001');
-const HOST = process.env.HOST || 'localhost';
+const PORT = Number(process.env.PORT) || 3001;
 
-app.listen(PORT, HOST, () => {
-  console.log(`🚀 Server running on http://${HOST}:${PORT}`);
-  console.log(`📊 Health check: http://${HOST}:${PORT}/health`);
+// Bind to 0.0.0.0 so Render can see the port
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📊 Health check: /health`);
 });
 
 export default app;
