@@ -4,7 +4,7 @@ import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
-router.use(authenticate);
+router.use(authenticate); //authenticate
 
 router.get('/', getAppointments);
 router.get('/my-week', getMyWeek);
