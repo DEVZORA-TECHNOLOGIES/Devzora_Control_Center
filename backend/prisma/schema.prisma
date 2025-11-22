@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String      @id @default(cuid())
+  email       String      @unique
+  password    String
+  firstName   String
+  lastName    String
+  phone       String?
+  avatar      String?
+  role        UserRole    @default(STAFF)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  projects    Project[]
+  appointments Appointment[]
+  invoices    Invoice[] @relation("InvoiceCreator")
+  
+  @@map("users")
+}
+
+model Client {
+  id          String     @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  industry    String?
+  address     String?
+  city        String?
+  country     String?
+  notes       String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  projects       Project[]
+  subscriptions Subscription[]
+  invoices      Invoice[]
+  appointments  Appointment[]
+  
+  @@map("clients")
+}
+
+model Project {
+  id             String      @id @default(cuid())
+  name           String
+  description    String?
+  status         ProjectStatus @default(GREEN)
+  startDate      DateTime
+  targetEndDate  DateTime?
+  actualEndDate  DateTime?
+  percentComplete Int        @default(0)
+  latestUpdate   String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  
+  clientId       String
+  ownerId        String
+  client         Client      @relation(fields: [clientId], references: [id])
+  owner          User        @relation(fields: [ownerId], references: [id])
+  milestones     Milestone[]
+  appointments   Appointment[]
+  
+  @@map("projects")
+}
+
+model Milestone {
+  id          String   @id @default(cuid())
+  name        String
+  dueDate     DateTime
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("milestones")
+}
+
+model Subscription {
+  id            String          @id @default(cuid())
+  productName   String
+  plan          String
+  amount        Decimal
+  billingCycle  BillingCycle
+  startDate     DateTime
+  nextInvoiceDate DateTime
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  clientId      String
+  client        Client          @relation(fields: [clientId], references: [id])
+  invoices      Invoice[]
+  
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  issueDate     DateTime
+  dueDate       DateTime
+  status        InvoiceStatus @default(DRAFT)
+  subtotal      Decimal
+  tax           Decimal?      @default(0)
+  total         Decimal
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  clientId      String
+  subscriptionId String?
+  createdById   String
+  client        Client        @relation(fields: [clientId], references: [id])
+  subscription  Subscription? @relation(fields: [subscriptionId], references: [id])
+  creator       User          @relation("InvoiceCreator", fields: [createdById], references: [id])
+  items         InvoiceItem[]
+  
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  description String
+  quantity    Decimal  @default(1)
+  rate        Decimal
+  amount      Decimal
+  createdAt   DateTime @default(now())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  @@map("invoice_items")
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  location    String?
+  reminderSent24h Boolean @default(false)
+  reminderSent1h  Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  clientId    String?
+  projectId   String?
+  ownerId     String
+  client      Client?  @relation(fields: [clientId], references: [id])
+  project     Project? @relation(fields: [projectId], references: [id])
+  owner       User     @relation(fields: [ownerId], references: [id])
+  
+  @@map("appointments")
+}
+
+enum UserRole {
+  ADMIN
+  FOUNDER
+  PROJECT_LEAD
+  FINANCE
+  ACCOUNT_MANAGER
+  STAFF
+}
+
+enum ProjectStatus {
+  GREEN
+  AMBER
+  RED
+  ON_HOLD
+  COMPLETED
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
