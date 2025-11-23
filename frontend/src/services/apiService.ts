@@ -1,7 +1,33 @@
 import { useAuthStore } from '@/store/authStore'
 
-const RAW_BASE_URL = import.meta.env.VITE_API_URL || 'https://devzora-control-center.onrender.com';
-const API_BASE_URL = RAW_BASE_URL.replace(/\/$/, '') + '/api'; // strip trailing slash and add /api
+// Smart API base URL detection:
+// - In development (Vite dev server): use relative /api (leverages Vite proxy)
+// - In production: use VITE_API_URL if set, otherwise use production default
+// - Always ensures /api is appended correctly without duplication
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  const isDev = import.meta.env.DEV;
+  
+  // In development mode without explicit URL, use Vite proxy
+  if (isDev && !envUrl) {
+    return '/api';
+  }
+  
+  // If VITE_API_URL is explicitly set (production or custom), use it
+  if (envUrl) {
+    let baseUrl = envUrl.replace(/\/$/, ''); // Remove trailing slash
+    // If it doesn't already end with /api, add it
+    if (!baseUrl.endsWith('/api')) {
+      baseUrl = baseUrl + '/api';
+    }
+    return baseUrl;
+  }
+  
+  // Production fallback (shouldn't happen if VITE_API_URL is set in Netlify)
+  return 'https://devzora-control-center.onrender.com/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiService {
   private getHeaders(): HeadersInit {
