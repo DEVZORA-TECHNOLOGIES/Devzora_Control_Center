@@ -72,3 +72,4 @@ Write-Host "`n🌐 Default credentials:" -ForegroundColor Cyan
 Write-Host "   Email: admin@devzora.com" -ForegroundColor White
 Write-Host "   Password: password" -ForegroundColor White
 
+

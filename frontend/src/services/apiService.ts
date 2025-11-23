@@ -1,6 +1,7 @@
 import { useAuthStore } from '@/store/authStore'
 
-const API_BASE_URL = '/api'
+const RAW_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = RAW_BASE_URL.replace(/\/$/, ''); // strip trailing slash
 
 class ApiService {
   private getHeaders(): HeadersInit {

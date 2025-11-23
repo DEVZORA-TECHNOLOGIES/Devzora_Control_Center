@@ -129,3 +129,4 @@ npx prisma migrate reset  # WARNING: This will delete all data
 5. Configure email notifications for reminders
 6. Add file upload functionality if needed
 
+

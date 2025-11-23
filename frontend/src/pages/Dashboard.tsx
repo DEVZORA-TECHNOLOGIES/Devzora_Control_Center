@@ -11,11 +11,11 @@ export default function Dashboard() {
     return <div className="flex items-center justify-center h-64">Loading...</div>
   }
 
-  const stats = data?.stats
-  const today = data?.today
-  const thisWeek = data?.thisWeek
-  const money = data?.money
-  const projects = data?.projects
+  const stats = (data as any)?.stats
+  const today = (data as any)?.today
+  const thisWeek = (data as any)?.thisWeek
+  const money = (data as any)?.money
+  const projects = (data as any)?.projects
 
   return (
     <div className="space-y-6">
@@ -200,4 +200,5 @@ export default function Dashboard() {
     </div>
   )
 }
+
 

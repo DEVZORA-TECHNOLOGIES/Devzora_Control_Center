@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from 'react-query'
 import { apiService } from '@/services/apiService'
-import { BarChart3, DollarSign, FolderKanban, AlertCircle } from 'lucide-react'
+import { DollarSign, FolderKanban, AlertCircle } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 export default function Reports() {
@@ -67,20 +67,20 @@ export default function Reports() {
                     <div className="bg-blue-50 rounded-lg p-4">
                       <p className="text-sm text-gray-500">Current MRR</p>
                       <p className="text-2xl font-bold text-gray-900 mt-1">
-                        UGX {revenueData?.currentMRR?.toLocaleString() || 0}
+                        UGX {(revenueData as any)?.currentMRR?.toLocaleString() || 0}
                       </p>
                     </div>
                     <div className="bg-green-50 rounded-lg p-4">
                       <p className="text-sm text-gray-500">ARR</p>
                       <p className="text-2xl font-bold text-gray-900 mt-1">
-                        UGX {revenueData?.arr?.toLocaleString() || 0}
+                        UGX {(revenueData as any)?.arr?.toLocaleString() || 0}
                       </p>
                     </div>
                   </div>
 
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={revenueData?.mrrOverTime || []}>
+                      <LineChart data={(revenueData as any)?.mrrOverTime || []}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="month" />
                         <YAxis />
@@ -93,7 +93,7 @@ export default function Reports() {
 
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={revenueData?.renewalsByMonth || []}>
+                      <BarChart data={(revenueData as any)?.renewalsByMonth || []}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="monthShort" />
                         <YAxis />
@@ -115,7 +115,7 @@ export default function Reports() {
               ) : (
                 <>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {Object.entries(projectsData?.statusCounts || {}).map(([status, count]) => (
+                    {Object.entries((projectsData as any)?.statusCounts || {}).map(([status, count]) => (
                       <div key={status} className="bg-gray-50 rounded-lg p-4 text-center">
                         <p className="text-2xl font-bold text-gray-900">{count as number}</p>
                         <p className="text-sm text-gray-500 mt-1">{status}</p>
@@ -127,7 +127,7 @@ export default function Reports() {
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={Object.entries(projectsData?.statusCounts || {}).map(([name, value]) => ({ name, value }))}
+                          data={Object.entries((projectsData as any)?.statusCounts || {}).map(([name, value]) => ({ name, value }))}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
@@ -136,7 +136,7 @@ export default function Reports() {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {Object.entries(projectsData?.statusCounts || {}).map((_, index) => (
+                          {Object.entries((projectsData as any)?.statusCounts || {}).map((_, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
@@ -159,19 +159,19 @@ export default function Reports() {
                     <div className="bg-red-50 rounded-lg p-4">
                       <p className="text-sm text-gray-500">Overdue Invoices</p>
                       <p className="text-2xl font-bold text-gray-900 mt-1">
-                        {overdueData?.summary?.totalOverdueInvoices || 0}
+                        {(overdueData as any)?.summary?.totalOverdueInvoices || 0}
                       </p>
                     </div>
                     <div className="bg-red-50 rounded-lg p-4">
                       <p className="text-sm text-gray-500">Overdue Amount</p>
                       <p className="text-2xl font-bold text-gray-900 mt-1">
-                        UGX {overdueData?.summary?.totalOverdueAmount?.toLocaleString() || 0}
+                        UGX {(overdueData as any)?.summary?.totalOverdueAmount?.toLocaleString() || 0}
                       </p>
                     </div>
                     <div className="bg-yellow-50 rounded-lg p-4">
                       <p className="text-sm text-gray-500">Overdue Milestones</p>
                       <p className="text-2xl font-bold text-gray-900 mt-1">
-                        {overdueData?.summary?.totalOverdueMilestones || 0}
+                        {(overdueData as any)?.summary?.totalOverdueMilestones || 0}
                       </p>
                     </div>
                   </div>
@@ -179,7 +179,7 @@ export default function Reports() {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Overdue Invoices</h3>
                     <div className="space-y-2">
-                      {overdueData?.overdueInvoices?.map((invoice: any) => (
+                      {(overdueData as any)?.overdueInvoices?.map((invoice: any) => (
                         <div key={invoice.id} className="p-4 bg-red-50 rounded-lg border border-red-200">
                           <div className="flex items-center justify-between">
                             <div>
@@ -208,4 +208,5 @@ export default function Reports() {
     </div>
   )
 }
+
 

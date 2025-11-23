@@ -115,6 +115,7 @@ export default function ClientDetail() {
 
   const handleProjectSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     if (!projectForm.name || !projectForm.startDate) {
       toast.error('Project name and start date are required')
       return
@@ -140,6 +141,7 @@ export default function ClientDetail() {
 
   const handleSubscriptionSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     if (!subscriptionForm.productName || !subscriptionForm.amount) {
       toast.error('Product name and amount are required')
       return
@@ -154,6 +156,7 @@ export default function ClientDetail() {
 
   const handleInvoiceSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     const validItems = invoiceForm.items.filter(item => item.description && item.rate)
     if (validItems.length === 0) {
       toast.error('At least one invoice item is required')
@@ -179,6 +182,7 @@ export default function ClientDetail() {
 
   const handleAppointmentSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     if (!appointmentForm.title || !appointmentForm.date) {
       toast.error('Title and date are required')
       return
@@ -249,7 +253,7 @@ export default function ClientDetail() {
     return <div>Client not found</div>
   }
 
-  const SidePanel = ({ title, children, onSubmit, isLoading: submitting }: any) => (
+  const SidePanel = ({ title, children, onSubmit, isLoading: submitting, formId }: any) => (
     <div
       className={`fixed inset-0 z-50 overflow-hidden ${
         openPanel ? 'pointer-events-auto' : 'pointer-events-none'
@@ -262,21 +266,25 @@ export default function ClientDetail() {
         onClick={() => setOpenPanel(null)}
       />
       <div
-        className={`absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-all duration-300 ease-out ${
-          openPanel ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+        className={`absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-all duration-300 ease-out pointer-events-auto ${
+          openPanel ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'
         }`}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col h-full">
           <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 flex items-center justify-between shadow-sm">
             <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
             <button
+              type="button"
               onClick={() => setOpenPanel(null)}
               className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
             >
               <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto">{children}</div>
+          <div className="flex-1 overflow-y-auto pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+            {children}
+          </div>
           <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3 shadow-lg">
             <button
               type="button"
@@ -287,7 +295,7 @@ export default function ClientDetail() {
             </button>
             <button
               type="submit"
-              onClick={onSubmit}
+              form={formId}
               disabled={submitting}
               className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -529,8 +537,9 @@ export default function ClientDetail() {
           title="New Project"
           onSubmit={handleProjectSubmit}
           isLoading={createProjectMutation.isLoading}
+          formId="project-form"
         >
-          <form className="p-6 space-y-6">
+          <form id="project-form" onSubmit={handleProjectSubmit} className="p-6 space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Project Name <span className="text-red-500">*</span>
@@ -540,7 +549,7 @@ export default function ClientDetail() {
                 value={projectForm.name}
                 onChange={(e) => setProjectForm(prev => ({ ...prev, name: e.target.value }))}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 placeholder="e.g., Restaurant Management System Deployment"
               />
             </div>
@@ -625,8 +634,9 @@ export default function ClientDetail() {
           title="Add Subscription"
           onSubmit={handleSubscriptionSubmit}
           isLoading={createSubscriptionMutation.isLoading}
+          formId="subscription-form"
         >
-          <form className="p-6 space-y-6">
+          <form id="subscription-form" onSubmit={handleSubscriptionSubmit} className="p-6 space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Product Name <span className="text-red-500">*</span>
@@ -701,8 +711,9 @@ export default function ClientDetail() {
           title="New Invoice"
           onSubmit={handleInvoiceSubmit}
           isLoading={createInvoiceMutation.isLoading}
+          formId="invoice-form"
         >
-          <form className="p-6 space-y-6">
+          <form id="invoice-form" onSubmit={handleInvoiceSubmit} className="p-6 space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Issue Date</label>
@@ -807,8 +818,9 @@ export default function ClientDetail() {
           title="New Appointment"
           onSubmit={handleAppointmentSubmit}
           isLoading={createAppointmentMutation.isLoading}
+          formId="appointment-form"
         >
-          <form className="p-6 space-y-6">
+          <form id="appointment-form" onSubmit={handleAppointmentSubmit} className="p-6 space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Title <span className="text-red-500">*</span>

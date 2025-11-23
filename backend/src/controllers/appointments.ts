@@ -267,3 +267,4 @@ export const deleteAppointment = async (req: Request, res: Response) => {
   }
 };
 
+

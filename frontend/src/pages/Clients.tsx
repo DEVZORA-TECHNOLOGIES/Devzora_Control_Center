@@ -21,7 +21,7 @@ export default function Clients() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   
-  const { data, isLoading, refetch } = useQuery(
+  const { data, isLoading } = useQuery(
     ['clients', search],
     () => apiService.getClients({ search })
   )
