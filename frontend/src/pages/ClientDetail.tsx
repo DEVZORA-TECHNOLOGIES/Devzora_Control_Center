@@ -1,11 +1,122 @@
-import { useState } from 'react'
+import { useState, memo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { apiService } from '@/services/apiService'
 import { useAuthStore } from '@/store/authStore'
-import { ArrowLeft, Plus, X } from 'lucide-react'
+import { ArrowLeft, Plus, X, Edit2, Calendar, DollarSign, FileText, Briefcase } from 'lucide-react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+
+// SidePanel component moved outside to prevent recreation on every render
+interface SidePanelProps {
+  title: string
+  children: React.ReactNode
+  isLoading: boolean
+  formId: string
+  isOpen: boolean
+  onClose: () => void
+}
+
+const SidePanel = memo(({ title, children, isLoading: submitting, formId, isOpen, onClose }: SidePanelProps) => {
+  return (
+    <div
+      className={`fixed inset-0 z-50 overflow-hidden ${
+        isOpen ? 'pointer-events-auto' : 'pointer-events-none'
+      }`}
+    >
+      <div
+        className={`absolute inset-0 bg-black transition-all duration-300 ease-out ${
+          isOpen ? 'opacity-50 backdrop-blur-sm' : 'opacity-0'
+        }`}
+        onClick={onClose}
+      />
+      <div
+        className={`absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-all duration-300 ease-out pointer-events-auto ${
+          isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col h-full">
+          <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 flex items-center justify-between shadow-sm">
+            <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+            {children}
+          </div>
+          <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3 shadow-lg">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form={formId}
+              disabled={submitting}
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? 'Creating...' : 'Create'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+SidePanel.displayName = 'SidePanel'
+
+// Detail Modal Component
+interface DetailModalProps {
+  isOpen: boolean
+  onClose: () => void
+  title: string
+  children: React.ReactNode
+}
+
+const DetailModal = memo(({ isOpen, onClose, title, children }: DetailModalProps) => {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden pointer-events-auto">
+      <div
+        className="absolute inset-0 bg-black opacity-50 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <div
+          className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden transform transition-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+            <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-all"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          </div>
+          <div className="overflow-y-auto max-h-[calc(90vh-80px)] p-6">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+DetailModal.displayName = 'DetailModal'
 
 export default function ClientDetail() {
   const { id } = useParams()
@@ -14,6 +125,10 @@ export default function ClientDetail() {
   const { user: currentUser } = useAuthStore()
   const [activeTab, setActiveTab] = useState<'projects' | 'subscriptions' | 'invoices' | 'appointments'>('projects')
   const [openPanel, setOpenPanel] = useState<'project' | 'subscription' | 'invoice' | 'appointment' | null>(null)
+  const [isEditingClient, setIsEditingClient] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<{ type: string; data: any } | null>(null)
+  
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin'
 
   // Form states
   const [projectForm, setProjectForm] = useState({
@@ -56,7 +171,50 @@ export default function ClientDetail() {
 
   const client = data?.client
 
+  // Client edit form state
+  const [clientEditForm, setClientEditForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    industry: '',
+    address: '',
+    city: '',
+    country: '',
+    notes: '',
+    isActive: true
+  })
+
+  // Initialize edit form when client data loads
+  useEffect(() => {
+    if (client && !isEditingClient) {
+      setClientEditForm({
+        name: client.name || '',
+        email: client.email || '',
+        phone: client.phone || '',
+        industry: client.industry || '',
+        address: client.address || '',
+        city: client.city || '',
+        country: client.country || '',
+        notes: client.notes || '',
+        isActive: client.isActive !== undefined ? client.isActive : true
+      })
+    }
+  }, [client, isEditingClient])
+
   // Mutations
+  const updateClientMutation = useMutation(
+    (data: any) => apiService.updateClient(id!, data),
+    {
+      onSuccess: () => {
+        toast.success('Client updated successfully!')
+        setIsEditingClient(false)
+        queryClient.invalidateQueries(['client', id])
+      },
+      onError: (error: any) => {
+        toast.error(error.message || 'Failed to update client')
+      }
+    }
+  )
   const createProjectMutation = useMutation(
     (data: any) => apiService.createProject(data),
     {
@@ -245,6 +403,15 @@ export default function ClientDetail() {
     }))
   }
 
+  const handleClientEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!clientEditForm.name) {
+      toast.error('Client name is required')
+      return
+    }
+    updateClientMutation.mutate(clientEditForm)
+  }
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64">Loading...</div>
   }
@@ -252,60 +419,6 @@ export default function ClientDetail() {
   if (!client) {
     return <div>Client not found</div>
   }
-
-  const SidePanel = ({ title, children, onSubmit, isLoading: submitting, formId }: any) => (
-    <div
-      className={`fixed inset-0 z-50 overflow-hidden ${
-        openPanel ? 'pointer-events-auto' : 'pointer-events-none'
-      }`}
-    >
-      <div
-        className={`absolute inset-0 bg-black transition-all duration-300 ease-out ${
-          openPanel ? 'opacity-50 backdrop-blur-sm' : 'opacity-0'
-        }`}
-        onClick={() => setOpenPanel(null)}
-      />
-      <div
-        className={`absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-all duration-300 ease-out pointer-events-auto ${
-          openPanel ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col h-full">
-          <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 flex items-center justify-between shadow-sm">
-            <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-            <button
-              type="button"
-              onClick={() => setOpenPanel(null)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            {children}
-          </div>
-          <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3 shadow-lg">
-            <button
-              type="button"
-              onClick={() => setOpenPanel(null)}
-              className="px-6 py-2.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              form={formId}
-              disabled={submitting}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {submitting ? 'Creating...' : 'Create'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
 
   return (
     <div className="space-y-6">
@@ -323,39 +436,159 @@ export default function ClientDetail() {
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Client Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Email</p>
-            <p className="font-medium text-gray-900">{client.email || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Phone</p>
-            <p className="font-medium text-gray-900">{client.phone || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Industry</p>
-            <p className="font-medium text-gray-900">{client.industry || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Location</p>
-            <p className="font-medium text-gray-900">
-              {[client.city, client.country].filter(Boolean).join(', ') || 'N/A'}
-            </p>
-          </div>
-          {client.address && (
-            <div className="md:col-span-2">
-              <p className="text-sm text-gray-500 mb-1">Address</p>
-              <p className="font-medium text-gray-900">{client.address}</p>
-            </div>
-          )}
-          {client.notes && (
-            <div className="md:col-span-2">
-              <p className="text-sm text-gray-500 mb-1">Notes</p>
-              <p className="font-medium text-gray-900 whitespace-pre-wrap">{client.notes}</p>
-            </div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Client Information</h2>
+          {isAdmin && (
+            <button
+              onClick={() => setIsEditingClient(!isEditingClient)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+            >
+              <Edit2 className="w-4 h-4" />
+              {isEditingClient ? 'Cancel Edit' : 'Edit Client'}
+            </button>
           )}
         </div>
+        {isEditingClient ? (
+          <form onSubmit={handleClientEditSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={clientEditForm.name}
+                  onChange={(e) => setClientEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={clientEditForm.email}
+                  onChange={(e) => setClientEditForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
+                <input
+                  type="tel"
+                  value={clientEditForm.phone}
+                  onChange={(e) => setClientEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Industry</label>
+                <input
+                  type="text"
+                  value={clientEditForm.industry}
+                  onChange={(e) => setClientEditForm(prev => ({ ...prev, industry: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
+                <input
+                  type="text"
+                  value={clientEditForm.city}
+                  onChange={(e) => setClientEditForm(prev => ({ ...prev, city: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Country</label>
+                <input
+                  type="text"
+                  value={clientEditForm.country}
+                  onChange={(e) => setClientEditForm(prev => ({ ...prev, country: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
+                <textarea
+                  value={clientEditForm.address}
+                  onChange={(e) => setClientEditForm(prev => ({ ...prev, address: e.target.value }))}
+                  rows={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                <textarea
+                  value={clientEditForm.notes}
+                  onChange={(e) => setClientEditForm(prev => ({ ...prev, notes: e.target.value }))}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={clientEditForm.isActive}
+                    onChange={(e) => setClientEditForm(prev => ({ ...prev, isActive: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-semibold text-gray-700">Active Client</span>
+                </label>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsEditingClient(false)}
+                className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={updateClientMutation.isLoading}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {updateClientMutation.isLoading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Email</p>
+              <p className="font-medium text-gray-900">{client.email || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Phone</p>
+              <p className="font-medium text-gray-900">{client.phone || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Industry</p>
+              <p className="font-medium text-gray-900">{client.industry || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Location</p>
+              <p className="font-medium text-gray-900">
+                {[client.city, client.country].filter(Boolean).join(', ') || 'N/A'}
+              </p>
+            </div>
+            {client.address && (
+              <div className="md:col-span-2">
+                <p className="text-sm text-gray-500 mb-1">Address</p>
+                <p className="font-medium text-gray-900">{client.address}</p>
+              </div>
+            )}
+            {client.notes && (
+              <div className="md:col-span-2">
+                <p className="text-sm text-gray-500 mb-1">Notes</p>
+                <p className="font-medium text-gray-900 whitespace-pre-wrap">{client.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow">
@@ -395,11 +628,15 @@ export default function ClientDetail() {
                 </div>
               ) : (
                 client.projects?.map((project: any) => (
-                  <div key={project.id} className="p-4 border border-gray-200 rounded-lg">
+                  <div
+                    key={project.id}
+                    onClick={() => setSelectedItem({ type: 'project', data: project })}
+                    className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md cursor-pointer transition-all"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium text-gray-900">{project.name}</h3>
-                        <p className="text-sm text-gray-500">{project.description}</p>
+                        <p className="text-sm text-gray-500">{project.description || 'No description'}</p>
                       </div>
                       <span className={`px-3 py-1 rounded text-sm font-medium ${
                         project.status === 'GREEN' ? 'bg-green-100 text-green-700' :
@@ -433,7 +670,11 @@ export default function ClientDetail() {
                 </div>
               ) : (
                 client.subscriptions?.map((sub: any) => (
-                  <div key={sub.id} className="p-4 border border-gray-200 rounded-lg">
+                  <div
+                    key={sub.id}
+                    onClick={() => setSelectedItem({ type: 'subscription', data: sub })}
+                    className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md cursor-pointer transition-all"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium text-gray-900">{sub.productName}</h3>
@@ -469,7 +710,11 @@ export default function ClientDetail() {
                 </div>
               ) : (
                 client.invoices?.map((invoice: any) => (
-                  <div key={invoice.id} className="p-4 border border-gray-200 rounded-lg">
+                  <div
+                    key={invoice.id}
+                    onClick={() => setSelectedItem({ type: 'invoice', data: invoice })}
+                    className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md cursor-pointer transition-all"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium text-gray-900">{invoice.invoiceNumber}</h3>
@@ -511,7 +756,11 @@ export default function ClientDetail() {
                 </div>
               ) : (
                 client.appointments?.map((apt: any) => (
-                  <div key={apt.id} className="p-4 border border-gray-200 rounded-lg">
+                  <div
+                    key={apt.id}
+                    onClick={() => setSelectedItem({ type: 'appointment', data: apt })}
+                    className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md cursor-pointer transition-all"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium text-gray-900">{apt.title}</h3>
@@ -535,9 +784,10 @@ export default function ClientDetail() {
       {openPanel === 'project' && (
         <SidePanel
           title="New Project"
-          onSubmit={handleProjectSubmit}
           isLoading={createProjectMutation.isLoading}
           formId="project-form"
+          isOpen={openPanel === 'project'}
+          onClose={() => setOpenPanel(null)}
         >
           <form id="project-form" onSubmit={handleProjectSubmit} className="p-6 space-y-6">
             <div>
@@ -632,9 +882,10 @@ export default function ClientDetail() {
       {openPanel === 'subscription' && (
         <SidePanel
           title="Add Subscription"
-          onSubmit={handleSubscriptionSubmit}
           isLoading={createSubscriptionMutation.isLoading}
           formId="subscription-form"
+          isOpen={openPanel === 'subscription'}
+          onClose={() => setOpenPanel(null)}
         >
           <form id="subscription-form" onSubmit={handleSubscriptionSubmit} className="p-6 space-y-6">
             <div>
@@ -709,9 +960,10 @@ export default function ClientDetail() {
       {openPanel === 'invoice' && (
         <SidePanel
           title="New Invoice"
-          onSubmit={handleInvoiceSubmit}
           isLoading={createInvoiceMutation.isLoading}
           formId="invoice-form"
+          isOpen={openPanel === 'invoice'}
+          onClose={() => setOpenPanel(null)}
         >
           <form id="invoice-form" onSubmit={handleInvoiceSubmit} className="p-6 space-y-6">
             <div className="grid grid-cols-2 gap-4">
@@ -816,9 +1068,10 @@ export default function ClientDetail() {
       {openPanel === 'appointment' && (
         <SidePanel
           title="New Appointment"
-          onSubmit={handleAppointmentSubmit}
           isLoading={createAppointmentMutation.isLoading}
           formId="appointment-form"
+          isOpen={openPanel === 'appointment'}
+          onClose={() => setOpenPanel(null)}
         >
           <form id="appointment-form" onSubmit={handleAppointmentSubmit} className="p-6 space-y-6">
             <div>
@@ -886,6 +1139,269 @@ export default function ClientDetail() {
           </form>
         </SidePanel>
       )}
+
+      {/* Detail Modals */}
+      <DetailModal
+        isOpen={selectedItem?.type === 'project'}
+        onClose={() => setSelectedItem(null)}
+        title="Project Details"
+      >
+        {selectedItem?.type === 'project' && selectedItem.data && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Project Name</p>
+                <p className="font-semibold text-gray-900">{selectedItem.data.name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Status</p>
+                <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${
+                  selectedItem.data.status === 'GREEN' ? 'bg-green-100 text-green-700' :
+                  selectedItem.data.status === 'AMBER' ? 'bg-yellow-100 text-yellow-700' :
+                  selectedItem.data.status === 'RED' ? 'bg-red-100 text-red-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>
+                  {selectedItem.data.status}
+                </span>
+              </div>
+              {selectedItem.data.startDate && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Start Date</p>
+                  <p className="font-medium text-gray-900">{format(new Date(selectedItem.data.startDate), 'MMM d, yyyy')}</p>
+                </div>
+              )}
+              {selectedItem.data.targetEndDate && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Target End Date</p>
+                  <p className="font-medium text-gray-900">{format(new Date(selectedItem.data.targetEndDate), 'MMM d, yyyy')}</p>
+                </div>
+              )}
+              {selectedItem.data.owner && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Project Owner</p>
+                  <p className="font-medium text-gray-900">
+                    {selectedItem.data.owner.firstName} {selectedItem.data.owner.lastName}
+                  </p>
+                </div>
+              )}
+              {selectedItem.data.progressPercent !== undefined && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Progress</p>
+                  <p className="font-medium text-gray-900">{selectedItem.data.progressPercent}%</p>
+                </div>
+              )}
+            </div>
+            {selectedItem.data.description && (
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Description</p>
+                <p className="font-medium text-gray-900 whitespace-pre-wrap">{selectedItem.data.description}</p>
+              </div>
+            )}
+            {selectedItem.data._count?.milestones > 0 && (
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Milestones</p>
+                <p className="font-medium text-gray-900">{selectedItem.data._count.milestones} milestone(s)</p>
+              </div>
+            )}
+          </div>
+        )}
+      </DetailModal>
+
+      <DetailModal
+        isOpen={selectedItem?.type === 'subscription'}
+        onClose={() => setSelectedItem(null)}
+        title="Subscription Details"
+      >
+        {selectedItem?.type === 'subscription' && selectedItem.data && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Product Name</p>
+                <p className="font-semibold text-gray-900">{selectedItem.data.productName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Plan</p>
+                <p className="font-medium text-gray-900">{selectedItem.data.plan || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Billing Cycle</p>
+                <p className="font-medium text-gray-900">{selectedItem.data.billingCycle}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Amount</p>
+                <p className="font-semibold text-gray-900">UGX {parseFloat(selectedItem.data.amount).toLocaleString()}</p>
+              </div>
+              {selectedItem.data.startDate && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Start Date</p>
+                  <p className="font-medium text-gray-900">{format(new Date(selectedItem.data.startDate), 'MMM d, yyyy')}</p>
+                </div>
+              )}
+              {selectedItem.data.nextInvoiceDate && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Next Invoice Date</p>
+                  <p className="font-medium text-gray-900">{format(new Date(selectedItem.data.nextInvoiceDate), 'MMM d, yyyy')}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Status</p>
+                <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${
+                  selectedItem.data.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                }`}>
+                  {selectedItem.data.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </DetailModal>
+
+      <DetailModal
+        isOpen={selectedItem?.type === 'invoice'}
+        onClose={() => setSelectedItem(null)}
+        title="Invoice Details"
+      >
+        {selectedItem?.type === 'invoice' && selectedItem.data && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Invoice Number</p>
+                <p className="font-semibold text-gray-900">{selectedItem.data.invoiceNumber}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Status</p>
+                <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${
+                  selectedItem.data.status === 'PAID' ? 'bg-green-100 text-green-700' :
+                  selectedItem.data.status === 'OVERDUE' ? 'bg-red-100 text-red-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>
+                  {selectedItem.data.status}
+                </span>
+              </div>
+              {selectedItem.data.issueDate && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Issue Date</p>
+                  <p className="font-medium text-gray-900">{format(new Date(selectedItem.data.issueDate), 'MMM d, yyyy')}</p>
+                </div>
+              )}
+              {selectedItem.data.dueDate && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Due Date</p>
+                  <p className="font-medium text-gray-900">{format(new Date(selectedItem.data.dueDate), 'MMM d, yyyy')}</p>
+                </div>
+              )}
+              {selectedItem.data.subscription && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Related Subscription</p>
+                  <p className="font-medium text-gray-900">{selectedItem.data.subscription.productName}</p>
+                </div>
+              )}
+              {selectedItem.data.creator && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Created By</p>
+                  <p className="font-medium text-gray-900">
+                    {selectedItem.data.creator.firstName} {selectedItem.data.creator.lastName}
+                  </p>
+                </div>
+              )}
+            </div>
+            {selectedItem.data.items && selectedItem.data.items.length > 0 && (
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-3">Invoice Items</p>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Description</th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Quantity</th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Rate</th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {selectedItem.data.items.map((item: any, index: number) => (
+                        <tr key={index}>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.description}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{item.quantity}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">UGX {parseFloat(item.rate).toLocaleString()}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">UGX {parseFloat(item.amount).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end space-x-6 pt-4 border-t border-gray-200">
+              {selectedItem.data.tax > 0 && (
+                <div className="text-right">
+                  <p className="text-sm text-gray-500">Tax</p>
+                  <p className="font-medium text-gray-900">UGX {parseFloat(selectedItem.data.tax).toLocaleString()}</p>
+                </div>
+              )}
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Total</p>
+                <p className="text-xl font-bold text-gray-900">UGX {parseFloat(selectedItem.data.total).toLocaleString()}</p>
+              </div>
+            </div>
+            {selectedItem.data.notes && (
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Notes</p>
+                <p className="font-medium text-gray-900 whitespace-pre-wrap">{selectedItem.data.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </DetailModal>
+
+      <DetailModal
+        isOpen={selectedItem?.type === 'appointment'}
+        onClose={() => setSelectedItem(null)}
+        title="Appointment Details"
+      >
+        {selectedItem?.type === 'appointment' && selectedItem.data && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Title</p>
+                <p className="font-semibold text-gray-900">{selectedItem.data.title}</p>
+              </div>
+              {selectedItem.data.project && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Related Project</p>
+                  <p className="font-medium text-gray-900">{selectedItem.data.project.name}</p>
+                </div>
+              )}
+              {selectedItem.data.date && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Date & Time</p>
+                  <p className="font-medium text-gray-900">{format(new Date(selectedItem.data.date), 'MMM d, yyyy h:mm a')}</p>
+                </div>
+              )}
+              {selectedItem.data.location && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Location</p>
+                  <p className="font-medium text-gray-900">{selectedItem.data.location}</p>
+                </div>
+              )}
+              {selectedItem.data.owner && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Owner</p>
+                  <p className="font-medium text-gray-900">
+                    {selectedItem.data.owner.firstName} {selectedItem.data.owner.lastName}
+                  </p>
+                </div>
+              )}
+            </div>
+            {selectedItem.data.description && (
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Description</p>
+                <p className="font-medium text-gray-900 whitespace-pre-wrap">{selectedItem.data.description}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </DetailModal>
     </div>
   )
 }
