@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/store/authStore'
 
-const RAW_BASE_URL = import.meta.env.VITE_API_URL || 'https://devzora-control-center.onrender.com/api';
-const API_BASE_URL = RAW_BASE_URL.replace(/\/$/, ''); // strip trailing slash
+const RAW_BASE_URL = import.meta.env.VITE_API_URL || 'https://devzora-control-center.onrender.com';
+const API_BASE_URL = RAW_BASE_URL.replace(/\/$/, '') + '/api'; // strip trailing slash and add /api
 
 class ApiService {
   private getHeaders(): HeadersInit {
