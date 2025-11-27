@@ -183,7 +183,7 @@ export default function Dashboard() {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {projectStatusData.map((entry, index) => (
+                    {projectStatusData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>

@@ -53,7 +53,7 @@ export const createBudget = async (req: Request, res: Response) => {
                 category,
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
-                projectId
+                projectId: projectId && projectId.trim() !== '' ? projectId : null
             }
         });
 
