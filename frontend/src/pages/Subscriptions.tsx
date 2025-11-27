@@ -17,14 +17,12 @@ export default function Subscriptions() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-            Subscriptions
-          </h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold text-gray-900">Subscriptions</h1>
+          <p className="text-gray-500 mt-1">
             Manage recurring revenue streams
           </p>
         </div>
-        <button className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:scale-105 active:scale-95">
+        <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium">
           <Plus className="w-5 h-5" />
           Add Subscription
         </button>
@@ -32,7 +30,7 @@ export default function Subscriptions() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white/70 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl p-6">
+        <div className="bg-white border border-gray-200 rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Active Subscriptions</p>
@@ -70,7 +68,7 @@ export default function Subscriptions() {
       </div>
 
       {/* Subscriptions Table */}
-      <div className="bg-white/70 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-lg shadow overflow-hidden">
         {isLoading ? (
           <div className="p-12 flex justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

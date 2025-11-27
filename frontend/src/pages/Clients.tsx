@@ -70,24 +70,22 @@ export default function Clients() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-            Clients
-          </h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
+          <p className="text-gray-500 mt-1">
             Manage your client relationships
           </p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:scale-105 active:scale-95"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium"
         >
           <Plus className="w-5 h-5" />
           Add Client
         </button>
       </div>
 
-      <div className="bg-white/70 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl overflow-hidden">
-        <div className="p-6 border-b border-gray-100/50">
+      <div className="bg-white border border-gray-200 rounded-lg shadow overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -95,7 +93,7 @@ export default function Clients() {
               placeholder="Search clients by name, email, or industry..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
             />
           </div>
         </div>
@@ -124,16 +122,16 @@ export default function Clients() {
             )}
           </div>
         ) : (
-          <div className="divide-y divide-gray-100/50">
+          <div className="divide-y divide-gray-200">
             {data?.clients?.map((client: any) => (
               <div
                 key={client.id}
                 onClick={() => navigate(`/clients/${client.id}`)}
-                className="group p-6 hover:bg-white/50 transition-all cursor-pointer"
+                className="group p-6 hover:bg-gray-50 transition-all cursor-pointer"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center text-primary font-bold text-lg border border-blue-100">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg border border-primary/20">
                       {client.name.charAt(0)}
                     </div>
                     <div>

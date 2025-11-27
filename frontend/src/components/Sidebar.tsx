@@ -34,9 +34,11 @@ export default function Sidebar() {
     <div className="w-72 bg-white border-r border-gray-200 flex flex-col shadow-sm z-20">
       <div className="p-8">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-            <span className="text-white font-bold text-xl">D</span>
-          </div>
+          <img
+            src="/src/assets/logo.jpg"
+            alt="Devzora Logo"
+            className="w-10 h-10 rounded-lg object-cover shadow-sm"
+          />
           <div>
             <h1 className="text-xl font-bold text-gray-900 tracking-tight">Devzora</h1>
             <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">Control Center</p>
