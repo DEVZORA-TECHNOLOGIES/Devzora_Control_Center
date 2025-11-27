@@ -68,8 +68,27 @@ model Project {
   owner          User        @relation(fields: [ownerId], references: [id])
   milestones     Milestone[]
   appointments   Appointment[]
+  budgets        Budget[]
   
   @@map("projects")
+}
+
+model Budget {
+  id          String   @id @default(cuid())
+  name        String
+  amount      Decimal
+  spent       Decimal  @default(0)
+  category    String
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id])
+  
+  @@map("budgets")
 }
 
 model Milestone {

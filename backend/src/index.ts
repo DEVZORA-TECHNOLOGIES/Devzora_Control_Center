@@ -17,6 +17,7 @@ import invoiceRoutes from './routes/invoices';
 import appointmentRoutes from './routes/appointments';
 import dashboardRoutes from './routes/dashboard';
 import reportRoutes from './routes/reports';
+import budgetRoutes from './routes/budgets';
 import prisma from './config/prisma';
 
 const app = express();
@@ -39,7 +40,7 @@ app.use(helmet());
 app.use(compression());
 
 // CORS configuration
-const allowedOrigins = process.env.CORS_ORIGIN 
+const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
   : ['http://localhost:8080', 'https://devzoracontrolcenter.netlify.app'];
 
@@ -49,7 +50,7 @@ app.use(cors({
     if (!origin) {
       return callback(null, true);
     }
-    
+
     if (allowedOrigins.includes(origin)) {
       // Return the specific origin, not true
       callback(null, origin);
@@ -92,6 +93,7 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/budgets', budgetRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

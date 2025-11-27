@@ -7,12 +7,12 @@ import { useAuthStore } from '@/store/authStore'
 const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL;
   const isDev = import.meta.env.DEV;
-  
+
   // In development mode without explicit URL, use Vite proxy
   if (isDev && !envUrl) {
     return '/api';
   }
-  
+
   // If VITE_API_URL is explicitly set (production or custom), use it
   if (envUrl) {
     let baseUrl = envUrl.replace(/\/$/, ''); // Remove trailing slash
@@ -22,7 +22,7 @@ const getApiBaseUrl = () => {
     }
     return baseUrl;
   }
-  
+
   // Production fallback (shouldn't happen if VITE_API_URL is set in Netlify)
   return 'https://devzora-control-center.onrender.com/api';
 };
@@ -225,6 +225,34 @@ class ApiService {
 
   async getOverdueReport() {
     return this.request('/reports/overdue')
+  }
+
+  // Budgets
+  async getBudgets(params?: { projectId?: string; category?: string }) {
+    const query = new URLSearchParams()
+    if (params?.projectId) query.append('projectId', params.projectId)
+    if (params?.category) query.append('category', params.category)
+    return this.request<{ budgets: any[] }>(`/budgets?${query.toString()}`)
+  }
+
+  async createBudget(data: any) {
+    return this.request<{ budget: any }>('/budgets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateBudget(id: string, data: any) {
+    return this.request<{ budget: any }>(`/budgets/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteBudget(id: string) {
+    return this.request(`/budgets/${id}`, {
+      method: 'DELETE',
+    })
   }
 }
 

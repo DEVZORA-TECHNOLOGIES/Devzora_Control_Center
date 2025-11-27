@@ -11,6 +11,7 @@ import Renewals from '@/pages/Renewals'
 import Invoices from '@/pages/Invoices'
 import Appointments from '@/pages/Appointments'
 import Reports from '@/pages/Reports'
+import Budgets from '@/pages/Budgets'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
                   <Route path="/invoices" element={<Invoices />} />
                   <Route path="/appointments" element={<Appointments />} />
                   <Route path="/reports" element={<Reports />} />
+                  <Route path="/budgets" element={<Budgets />} />
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </Layout>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useNavigate } from 'react-router-dom'
 import { apiService } from '@/services/apiService'
-import { Plus, Search, X } from 'lucide-react'
+import { Plus, Search, X, MapPin, Building2, Phone, Mail, ArrowRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function Clients() {
@@ -20,7 +20,7 @@ export default function Clients() {
   })
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  
+
   const { data, isLoading } = useQuery(
     ['clients', search],
     () => apiService.getClients({ search })
@@ -67,76 +67,111 @@ export default function Clients() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
-          <p className="text-gray-500 mt-1">Manage your clients</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            Clients
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your client relationships
+          </p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:scale-105 active:scale-95"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-5 h-5" />
           Add Client
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-4 border-b border-gray-200">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <div className="bg-white/70 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl overflow-hidden">
+        <div className="p-6 border-b border-gray-100/50">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search clients..."
+              placeholder="Search clients by name, email, or industry..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
             />
           </div>
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center text-gray-500">Loading...</div>
+          <div className="p-12 flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
         ) : data?.clients?.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-              <Plus className="w-8 h-8 text-gray-400" />
+          <div className="p-16 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
+              <Building2 className="w-10 h-10 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No clients found</h3>
-            <p className="text-gray-500 mb-4">
-              {search ? 'Try adjusting your search terms' : 'Get started by adding your first client'}
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No clients found</h3>
+            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+              {search ? 'Try adjusting your search terms to find what you are looking for.' : 'Get started by adding your first client to the system.'}
             </p>
             {!search && (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
                 Add Client
               </button>
             )}
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-100/50">
             {data?.clients?.map((client: any) => (
               <div
                 key={client.id}
                 onClick={() => navigate(`/clients/${client.id}`)}
-                className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                className="group p-6 hover:bg-white/50 transition-all cursor-pointer"
               >
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-900">{client.name}</h3>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                      {client.email && <span>{client.email}</span>}
-                      {client.phone && <span>{client.phone}</span>}
-                      {client.industry && <span>{client.industry}</span>}
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center text-primary font-bold text-lg border border-blue-100">
+                      {client.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary transition-colors flex items-center gap-2">
+                        {client.name}
+                        <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
+                        {client.industry && (
+                          <span className="flex items-center gap-1.5 bg-gray-100 px-2.5 py-0.5 rounded-md">
+                            <Building2 className="w-3.5 h-3.5" />
+                            {client.industry}
+                          </span>
+                        )}
+                        {client.email && (
+                          <span className="flex items-center gap-1.5">
+                            <Mail className="w-3.5 h-3.5" />
+                            {client.email}
+                          </span>
+                        )}
+                        {client.city && (
+                          <span className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5" />
+                            {client.city}, {client.country}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>{client._count?.projects || 0} projects</span>
-                    <span>{client._count?.subscriptions || 0} subscriptions</span>
+                  <div className="flex items-center gap-6">
+                    <div className="text-center px-4 py-2 bg-gray-50 rounded-lg border border-gray-100">
+                      <p className="text-xs text-gray-500 uppercase font-medium">Projects</p>
+                      <p className="text-lg font-bold text-gray-900">{client._count?.projects || 0}</p>
+                    </div>
+                    <div className="text-center px-4 py-2 bg-gray-50 rounded-lg border border-gray-100">
+                      <p className="text-xs text-gray-500 uppercase font-medium">Active Subs</p>
+                      <p className="text-lg font-bold text-gray-900">{client._count?.subscriptions || 0}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -147,204 +182,192 @@ export default function Clients() {
 
       {/* Add Client Side Panel */}
       <div
-        className={`fixed inset-0 z-50 overflow-hidden ${
-          isModalOpen ? 'pointer-events-auto' : 'pointer-events-none'
-        }`}
-      >
-        {/* Backdrop with blur */}
-        <div
-          className={`absolute inset-0 bg-black transition-all duration-300 ease-out ${
-            isModalOpen ? 'opacity-50 backdrop-blur-sm' : 'opacity-0'
+        className={`fixed inset-0 z-50 overflow-hidden ${isModalOpen ? 'pointer-events-auto' : 'pointer-events-none'
           }`}
+      >
+        <div
+          className={`absolute inset-0 bg-black/20 backdrop-blur-sm transition-all duration-300 ease-out ${isModalOpen ? 'opacity-100' : 'opacity-0'
+            }`}
           onClick={() => setIsModalOpen(false)}
         />
 
-        {/* Side Panel */}
         <div
-          className={`absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-all duration-300 ease-out ${
-            isModalOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
-          }`}
+          className={`absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-all duration-300 ease-out ${isModalOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
         >
           <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 flex items-center justify-between shadow-sm">
+            <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Add New Client</h2>
-                <p className="text-sm text-gray-500 mt-1">Fill in the details to create a new client</p>
+                <p className="text-sm text-gray-500 mt-1">Enter the details to register a new client</p>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
-                aria-label="Close panel"
+                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-6 h-6 text-gray-500" />
               </button>
             </div>
 
-            {/* Form Content */}
-            <div className="flex-1 overflow-y-auto">
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-8">
+              <form id="create-client-form" onSubmit={handleSubmit} className="space-y-8">
                 <div className="space-y-6">
-                  {/* Client Name */}
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Client Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                      placeholder="Enter client name"
-                    />
-                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-primary" />
+                    Company Information
+                  </h3>
 
-                  {/* Contact Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-6">
                     <div>
-                      <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                        Email
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Company Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                        placeholder="e.g. Acme Corp"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Industry
+                      </label>
+                      <input
+                        type="text"
+                        name="industry"
+                        value={formData.industry}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                        placeholder="e.g. Technology"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <Phone className="w-5 h-5 text-primary" />
+                    Contact Details
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address
                       </label>
                       <input
                         type="email"
-                        id="email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                        placeholder="client@example.com"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                        placeholder="contact@company.com"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
-                        Phone
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number
                       </label>
                       <input
                         type="tel"
-                        id="phone"
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                        placeholder="+256 700 000 000"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                        placeholder="+1 234 567 890"
                       />
                     </div>
                   </div>
+                </div>
 
-                  {/* Business Information */}
-                  <div>
-                    <label htmlFor="industry" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Industry
-                    </label>
-                    <input
-                      type="text"
-                      id="industry"
-                      name="industry"
-                      value={formData.industry}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                      placeholder="e.g., Hospitality, Technology, Retail"
-                    />
-                  </div>
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-primary" />
+                    Location
+                  </h3>
 
-                  {/* Location */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Address
+                      </label>
+                      <input
+                        type="text"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                        placeholder="123 Business St"
+                      />
+                    </div>
+
                     <div>
-                      <label htmlFor="city" className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         City
                       </label>
                       <input
                         type="text"
-                        id="city"
                         name="city"
                         value={formData.city}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                        placeholder="Kampala"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                        placeholder="New York"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="country" className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Country
                       </label>
                       <input
                         type="text"
-                        id="country"
                         name="country"
                         value={formData.country}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                        placeholder="Uganda"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                        placeholder="USA"
                       />
                     </div>
                   </div>
+                </div>
 
-                  {/* Address */}
-                  <div>
-                    <label htmlFor="address" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Address
-                    </label>
-                    <input
-                      type="text"
-                      id="address"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                      placeholder="Street address, building, etc."
-                    />
-                  </div>
-
-                  {/* Notes */}
-                  <div>
-                    <label htmlFor="notes" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Notes
-                    </label>
-                    <textarea
-                      id="notes"
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleChange}
-                      rows={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
-                      placeholder="Additional notes about the client..."
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
+                    rows={4}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none resize-none"
+                    placeholder="Any additional information..."
+                  />
                 </div>
               </form>
             </div>
 
-            {/* Footer */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3 shadow-lg">
+            <div className="px-8 py-6 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-4">
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-2.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium hover:scale-105 active:scale-95"
+                className="px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-200 rounded-xl transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                onClick={handleSubmit}
+                form="create-client-form"
                 disabled={createClientMutation.isLoading}
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
+                className="px-8 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {createClientMutation.isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Creating...
-                  </span>
-                ) : (
-                  'Create Client'
-                )}
+                {createClientMutation.isLoading ? 'Creating...' : 'Create Client'}
               </button>
             </div>
           </div>
