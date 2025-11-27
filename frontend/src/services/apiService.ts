@@ -235,6 +235,10 @@ class ApiService {
     return this.request<{ budgets: any[] }>(`/budgets?${query.toString()}`)
   }
 
+  async getBudget(id: string) {
+    return this.request<{ budget: any }>(`/budgets/${id}`)
+  }
+
   async createBudget(data: any) {
     return this.request<{ budget: any }>('/budgets', {
       method: 'POST',
@@ -251,6 +255,27 @@ class ApiService {
 
   async deleteBudget(id: string) {
     return this.request(`/budgets/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Budget Items
+  async createBudgetItem(budgetId: string, data: any) {
+    return this.request<{ item: any }>(`/budgets/${budgetId}/items`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateBudgetItem(budgetId: string, itemId: string, data: any) {
+    return this.request<{ item: any }>(`/budgets/${budgetId}/items/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteBudgetItem(budgetId: string, itemId: string) {
+    return this.request(`/budgets/${budgetId}/items/${itemId}`, {
       method: 'DELETE',
     })
   }

@@ -17,6 +17,9 @@ export const getBudgets = async (req: Request, res: Response) => {
                         id: true,
                         name: true
                     }
+                },
+                items: {
+                    orderBy: { date: 'desc' }
                 }
             },
             orderBy: { createdAt: 'desc' }
@@ -28,6 +31,45 @@ export const getBudgets = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         console.error('Get budgets error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const getBudget = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const budget = await prisma.budget.findUnique({
+            where: { id },
+            include: {
+                project: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                },
+                items: {
+                    orderBy: { date: 'desc' }
+                }
+            }
+        });
+
+        if (!budget) {
+            return res.status(404).json({
+                success: false,
+                message: 'Budget not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: { budget }
+        });
+    } catch (error: any) {
+        console.error('Get budget error:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'
@@ -86,6 +128,9 @@ export const updateBudget = async (req: Request, res: Response) => {
                 startDate: startDate ? new Date(startDate) : undefined,
                 endDate: endDate ? new Date(endDate) : undefined,
                 status
+            },
+            include: {
+                items: true
             }
         });
 
@@ -117,6 +162,133 @@ export const deleteBudget = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         console.error('Delete budget error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+// Budget Items
+export const createBudgetItem = async (req: Request, res: Response) => {
+    try {
+        const { budgetId } = req.params;
+        const { name, amount, date } = req.body;
+
+        if (!name || !amount) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields'
+            });
+        }
+
+        const item = await prisma.budgetItem.create({
+            data: {
+                name,
+                amount,
+                date: date ? new Date(date) : new Date(),
+                budgetId
+            }
+        });
+
+        // Update budget spent amount
+        const budget = await prisma.budget.findUnique({
+            where: { id: budgetId },
+            include: { items: true }
+        });
+
+        if (budget) {
+            const totalSpent = budget.items.reduce((sum, item) => sum + Number(item.amount), 0);
+            await prisma.budget.update({
+                where: { id: budgetId },
+                data: { spent: totalSpent }
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: 'Budget item created successfully',
+            data: { item }
+        });
+    } catch (error: any) {
+        console.error('Create budget item error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const updateBudgetItem = async (req: Request, res: Response) => {
+    try {
+        const { budgetId, itemId } = req.params;
+        const { name, amount, date } = req.body;
+
+        const item = await prisma.budgetItem.update({
+            where: { id: itemId },
+            data: {
+                name,
+                amount,
+                date: date ? new Date(date) : undefined
+            }
+        });
+
+        // Recalculate budget spent amount
+        const budget = await prisma.budget.findUnique({
+            where: { id: budgetId },
+            include: { items: true }
+        });
+
+        if (budget) {
+            const totalSpent = budget.items.reduce((sum, item) => sum + Number(item.amount), 0);
+            await prisma.budget.update({
+                where: { id: budgetId },
+                data: { spent: totalSpent }
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Budget item updated successfully',
+            data: { item }
+        });
+    } catch (error: any) {
+        console.error('Update budget item error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const deleteBudgetItem = async (req: Request, res: Response) => {
+    try {
+        const { budgetId, itemId } = req.params;
+
+        await prisma.budgetItem.delete({
+            where: { id: itemId }
+        });
+
+        // Recalculate budget spent amount
+        const budget = await prisma.budget.findUnique({
+            where: { id: budgetId },
+            include: { items: true }
+        });
+
+        if (budget) {
+            const totalSpent = budget.items.reduce((sum, item) => sum + Number(item.amount), 0);
+            await prisma.budget.update({
+                where: { id: budgetId },
+                data: { spent: totalSpent }
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Budget item deleted successfully'
+        });
+    } catch (error: any) {
+        console.error('Delete budget item error:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'

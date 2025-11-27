@@ -74,21 +74,35 @@ model Project {
 }
 
 model Budget {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
   amount      Decimal
-  spent       Decimal  @default(0)
+  spent       Decimal      @default(0)
   category    String
   startDate   DateTime
   endDate     DateTime
-  status      String   @default("ACTIVE")
+  status      BudgetStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  projectId   String?
+  project     Project?     @relation(fields: [projectId], references: [id])
+  items       BudgetItem[]
+  
+  @@map("budgets")
+}
+
+model BudgetItem {
+  id          String   @id @default(cuid())
+  name        String
+  amount      Decimal
+  date        DateTime @default(now())
+  budgetId    String
+  budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  projectId   String?
-  project     Project? @relation(fields: [projectId], references: [id])
-  
-  @@map("budgets")
+  @@map("budget_items")
 }
 
 model Milestone {
@@ -212,5 +226,12 @@ enum InvoiceStatus {
   PAID
   OVERDUE
   CANCELLED
+}
+
+enum BudgetStatus {
+  DRAFT
+  APPROVAL
+  ACTIVE
+  COMPLETED
 }
 

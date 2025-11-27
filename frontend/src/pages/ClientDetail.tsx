@@ -20,20 +20,17 @@ interface SidePanelProps {
 const SidePanel = memo(({ title, children, isLoading: submitting, formId, isOpen, onClose }: SidePanelProps) => {
   return (
     <div
-      className={`fixed inset-0 z-50 overflow-hidden ${
-        isOpen ? 'pointer-events-auto' : 'pointer-events-none'
-      }`}
+      className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'
+        }`}
     >
       <div
-        className={`absolute inset-0 bg-black transition-all duration-300 ease-out ${
-          isOpen ? 'opacity-50 backdrop-blur-sm' : 'opacity-0'
-        }`}
+        className={`absolute inset-0 bg-black transition-all duration-300 ease-out ${isOpen ? 'opacity-50 backdrop-blur-sm' : 'opacity-0'
+          }`}
         onClick={onClose}
       />
       <div
-        className={`absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-all duration-300 ease-out pointer-events-auto ${
-          isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'
-        }`}
+        className={`absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-all duration-300 ease-out pointer-events-auto ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'
+          }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col h-full">
@@ -75,7 +72,8 @@ const SidePanel = memo(({ title, children, isLoading: submitting, formId, isOpen
 
 SidePanel.displayName = 'SidePanel'
 
-// Detail Modal Component
+
+// Detail Modal Component (converted to side panel)
 interface DetailModalProps {
   isOpen: boolean
   onClose: () => void
@@ -87,17 +85,14 @@ const DetailModal = memo(({ isOpen, onClose, title, children }: DetailModalProps
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden pointer-events-auto">
+    <div className="fixed inset-0 z-50 overflow-hidden">
       <div
-        className="absolute inset-0 bg-black opacity-50 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
-      <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div
-          className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden transform transition-all"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+      <div className="absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-all duration-300">
+        <div className="flex flex-col h-full">
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-5 flex items-center justify-between z-10">
             <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
             <button
               type="button"
@@ -107,7 +102,7 @@ const DetailModal = memo(({ isOpen, onClose, title, children }: DetailModalProps
               <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
-          <div className="overflow-y-auto max-h-[calc(90vh-80px)] p-6">
+          <div className="flex-1 overflow-y-auto p-6">
             {children}
           </div>
         </div>
@@ -127,7 +122,7 @@ export default function ClientDetail() {
   const [openPanel, setOpenPanel] = useState<'project' | 'subscription' | 'invoice' | 'appointment' | null>(null)
   const [isEditingClient, setIsEditingClient] = useState(false)
   const [selectedItem, setSelectedItem] = useState<{ type: string; data: any } | null>(null)
-  
+
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin'
 
   // Form states
@@ -421,7 +416,7 @@ export default function ClientDetail() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/clients')}
@@ -592,18 +587,21 @@ export default function ClientDetail() {
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        <div className="border-b border-gray-200">
-          <div className="flex">
+        <div className="border-b border-gray-200 p-4">
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg overflow-x-auto w-fit">
             {(['projects', 'subscriptions', 'invoices', 'appointments'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 font-medium text-sm capitalize ${
-                  activeTab === tab
-                    ? 'border-b-2 border-blue-600 text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`px-4 py-2 rounded-md text-sm font-medium capitalize flex items-center gap-2 transition-all ${activeTab === tab
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+                  }`}
               >
+                {tab === 'projects' && <Briefcase className="w-4 h-4" />}
+                {tab === 'subscriptions' && <Calendar className="w-4 h-4" />}
+                {tab === 'invoices' && <FileText className="w-4 h-4" />}
+                {tab === 'appointments' && <Calendar className="w-4 h-4" />}
                 {tab}
               </button>
             ))}
@@ -623,8 +621,12 @@ export default function ClientDetail() {
                 </button>
               </div>
               {client.projects?.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <p>No projects yet. Create your first project.</p>
+                <div className="text-center py-16 text-gray-500">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <Briefcase className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No projects yet</h3>
+                  <p>Create your first project to start tracking work.</p>
                 </div>
               ) : (
                 client.projects?.map((project: any) => (
@@ -638,12 +640,11 @@ export default function ClientDetail() {
                         <h3 className="font-medium text-gray-900">{project.name}</h3>
                         <p className="text-sm text-gray-500">{project.description || 'No description'}</p>
                       </div>
-                      <span className={`px-3 py-1 rounded text-sm font-medium ${
-                        project.status === 'GREEN' ? 'bg-green-100 text-green-700' :
+                      <span className={`px-3 py-1 rounded text-sm font-medium ${project.status === 'GREEN' ? 'bg-green-100 text-green-700' :
                         project.status === 'AMBER' ? 'bg-yellow-100 text-yellow-700' :
-                        project.status === 'RED' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
+                          project.status === 'RED' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-700'
+                        }`}>
                         {project.status}
                       </span>
                     </div>
@@ -665,8 +666,12 @@ export default function ClientDetail() {
                 </button>
               </div>
               {client.subscriptions?.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <p>No subscriptions yet. Add your first subscription.</p>
+                <div className="text-center py-16 text-gray-500">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <Calendar className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No subscriptions yet</h3>
+                  <p>Add a subscription to start billing this client.</p>
                 </div>
               ) : (
                 client.subscriptions?.map((sub: any) => (
@@ -705,8 +710,12 @@ export default function ClientDetail() {
                 </button>
               </div>
               {client.invoices?.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <p>No invoices yet. Create your first invoice.</p>
+                <div className="text-center py-16 text-gray-500">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <FileText className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No invoices yet</h3>
+                  <p>Create an invoice to bill this client.</p>
                 </div>
               ) : (
                 client.invoices?.map((invoice: any) => (
@@ -724,11 +733,10 @@ export default function ClientDetail() {
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-gray-900">UGX {parseFloat(invoice.total).toLocaleString()}</p>
-                        <span className={`text-sm ${
-                          invoice.status === 'PAID' ? 'text-green-600' :
+                        <span className={`text-sm ${invoice.status === 'PAID' ? 'text-green-600' :
                           invoice.status === 'OVERDUE' ? 'text-red-600' :
-                          'text-gray-500'
-                        }`}>
+                            'text-gray-500'
+                          }`}>
                           {invoice.status}
                         </span>
                       </div>
@@ -751,8 +759,12 @@ export default function ClientDetail() {
                 </button>
               </div>
               {client.appointments?.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <p>No appointments yet. Schedule your first appointment.</p>
+                <div className="text-center py-16 text-gray-500">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <Calendar className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No appointments yet</h3>
+                  <p>Schedule your first appointment with this client.</p>
                 </div>
               ) : (
                 client.appointments?.map((apt: any) => (
@@ -1155,12 +1167,11 @@ export default function ClientDetail() {
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Status</p>
-                <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${
-                  selectedItem.data.status === 'GREEN' ? 'bg-green-100 text-green-700' :
+                <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${selectedItem.data.status === 'GREEN' ? 'bg-green-100 text-green-700' :
                   selectedItem.data.status === 'AMBER' ? 'bg-yellow-100 text-yellow-700' :
-                  selectedItem.data.status === 'RED' ? 'bg-red-100 text-red-700' :
-                  'bg-gray-100 text-gray-700'
-                }`}>
+                    selectedItem.data.status === 'RED' ? 'bg-red-100 text-red-700' :
+                      'bg-gray-100 text-gray-700'
+                  }`}>
                   {selectedItem.data.status}
                 </span>
               </div>
@@ -1245,9 +1256,8 @@ export default function ClientDetail() {
               )}
               <div>
                 <p className="text-sm text-gray-500 mb-1">Status</p>
-                <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${
-                  selectedItem.data.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                }`}>
+                <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${selectedItem.data.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                  }`}>
                   {selectedItem.data.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
@@ -1270,11 +1280,10 @@ export default function ClientDetail() {
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Status</p>
-                <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${
-                  selectedItem.data.status === 'PAID' ? 'bg-green-100 text-green-700' :
+                <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${selectedItem.data.status === 'PAID' ? 'bg-green-100 text-green-700' :
                   selectedItem.data.status === 'OVERDUE' ? 'bg-red-100 text-red-700' :
-                  'bg-gray-100 text-gray-700'
-                }`}>
+                    'bg-gray-100 text-gray-700'
+                  }`}>
                   {selectedItem.data.status}
                 </span>
               </div>
